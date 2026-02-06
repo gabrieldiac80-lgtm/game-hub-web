@@ -6,7 +6,7 @@ import {
   movePiece,
   getAIMove,
 } from '@/lib/chess-logic';
-// import { updateGameStats } from '@/lib/storage';
+// import { useProfile } from '@/contexts/ProfileContext';
 
 interface ChessProps {
   onBack: () => void;
@@ -18,10 +18,10 @@ const PIECE_SYMBOLS: Record<string, string> = {
 };
 
 export default function Chess({ onBack }: ChessProps) {
+  // const { updateStats } = useProfile();
   const [difficulty, setDifficulty] = useState<ChessDifficulty | null>(null);
   const [gameState, setGameState] = useState<ChessGameState | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [resultMessage] = useState('');
   const [validMoves, setValidMoves] = useState<[number, number][]>([]);
 
   useEffect(() => {
@@ -85,35 +85,36 @@ export default function Chess({ onBack }: ChessProps) {
 
   if (!gameState) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <div className="w-full max-w-md">
-          <div className="flex justify-between items-start mb-8">
-            <h1 className="text-4xl font-bold text-foreground">Chess</h1>
+      <div className="min-h-screen bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 p-4">
+        <div className="w-full max-w-md mx-auto">
+          <div className="flex justify-between items-start mb-8 pt-8">
+            <div>
+              <h1 className="text-4xl font-bold text-white">Chess</h1>
+              <p className="text-white text-opacity-80 mt-1">Select Difficulty</p>
+            </div>
             <button
               onClick={onBack}
-              className="text-2xl hover:opacity-70 transition"
+              className="text-2xl text-white hover:opacity-70 transition"
             >
               ✕
             </button>
           </div>
-
-          <p className="text-lg text-foreground font-bold mb-4">Select Difficulty</p>
 
           <div className="space-y-3">
             {(['easy', 'medium'] as ChessDifficulty[]).map(diff => (
               <button
                 key={diff}
                 onClick={() => handleSelectDifficulty(diff)}
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:opacity-90 transition capitalize"
+                className="w-full bg-white text-gray-800 py-4 rounded-xl font-bold hover:shadow-lg transition capitalize text-lg"
               >
-                {diff}
+                {diff === 'easy' ? '😊 Easy' : '🧠 Medium'}
               </button>
             ))}
           </div>
 
           <button
             onClick={onBack}
-            className="w-full bg-surface text-foreground py-4 rounded-xl font-bold border border-border hover:opacity-70 transition mt-4"
+            className="w-full bg-white bg-opacity-20 text-white py-4 rounded-xl font-bold border-2 border-white hover:bg-opacity-30 transition mt-4"
           >
             Back to Home
           </button>
@@ -123,28 +124,28 @@ export default function Chess({ onBack }: ChessProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-between items-start mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 p-4">
+      <div className="w-full max-w-md mx-auto">
+        <div className="flex justify-between items-start mb-6 pt-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground">Chess</h1>
-            <p className="text-muted mt-1 capitalize">{difficulty}</p>
+            <h1 className="text-4xl font-bold text-white">Chess</h1>
+            <p className="text-white text-opacity-80 mt-1 capitalize">{difficulty}</p>
           </div>
           <button
             onClick={onBack}
-            className="text-2xl hover:opacity-70 transition"
+            className="text-2xl text-white hover:opacity-70 transition"
           >
             ✕
           </button>
         </div>
 
-        <div className="bg-surface rounded-lg p-3 mb-6 border border-border">
-          <p className="text-center text-foreground font-bold">
+        <div className="bg-white bg-opacity-10 backdrop-blur rounded-lg p-3 mb-6 border border-white border-opacity-20">
+          <p className="text-white text-center font-bold">
             {gameState.currentPlayer === 'white' ? '♙ White to Move' : '♟ Black to Move'}
           </p>
         </div>
 
-        <div className="bg-surface rounded-2xl p-2 mb-6 border border-border overflow-hidden">
+        <div className="bg-gray-900 rounded-2xl p-2 mb-6 shadow-2xl border-4 border-amber-900">
           {gameState.board.map((row, rowIndex) => (
             <div key={rowIndex} className="flex">
               {row.map((square, colIndex) => {
@@ -156,11 +157,11 @@ export default function Chess({ onBack }: ChessProps) {
                   <button
                     key={`${rowIndex}-${colIndex}`}
                     onClick={() => handleSquarePress(rowIndex, colIndex)}
-                    className={`flex-1 aspect-square text-4xl flex items-center justify-center ${
-                      isLight ? 'bg-gray-200' : 'bg-gray-600'
-                    } ${isSelected ? 'border-4 border-primary' : ''} ${
-                      isValidMove ? 'border-4 border-success' : ''
-                    } hover:opacity-80 transition`}
+                    className={`flex-1 aspect-square text-4xl flex items-center justify-center font-bold transition ${
+                      isLight ? 'bg-amber-100' : 'bg-amber-700'
+                    } ${isSelected ? 'ring-4 ring-yellow-400' : ''} ${
+                      isValidMove ? 'ring-4 ring-green-400' : ''
+                    } hover:opacity-80`}
                   >
                     {square.piece ? PIECE_SYMBOLS[square.piece] : ''}
                   </button>
@@ -171,9 +172,9 @@ export default function Chess({ onBack }: ChessProps) {
         </div>
 
         {gameState.moveHistory.length > 0 && (
-          <div className="bg-surface rounded-lg p-4 mb-6 border border-border">
-            <p className="text-foreground font-bold mb-2">Moves:</p>
-            <p className="text-muted text-sm">
+          <div className="bg-white bg-opacity-10 backdrop-blur rounded-lg p-4 mb-6 border border-white border-opacity-20">
+            <p className="text-white font-bold mb-2">Moves:</p>
+            <p className="text-white text-sm">
               {gameState.moveHistory.join(' ')}
             </p>
           </div>
@@ -182,14 +183,14 @@ export default function Chess({ onBack }: ChessProps) {
         <div className="space-y-3">
           <button
             onClick={handleNewGame}
-            className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
+            className="w-full bg-white text-amber-700 py-3 rounded-xl font-bold hover:shadow-lg transition"
           >
             New Game
           </button>
 
           <button
             onClick={onBack}
-            className="w-full bg-surface text-foreground py-3 rounded-lg font-bold border border-border hover:opacity-70 transition"
+            className="w-full bg-white bg-opacity-20 text-white py-3 rounded-xl font-bold border-2 border-white hover:bg-opacity-30 transition"
           >
             Back to Home
           </button>
@@ -198,21 +199,21 @@ export default function Chess({ onBack }: ChessProps) {
 
       {showResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl p-8 w-full max-w-sm border border-border">
-            <p className="text-4xl text-center mb-4">♔</p>
-            <h2 className="text-2xl font-bold text-foreground text-center mb-8">
-              {resultMessage}
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <p className="text-5xl text-center mb-4">♔</p>
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">
+              Game Over
             </h2>
             <div className="space-y-3">
               <button
                 onClick={handleNewGame}
-                className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
+                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
               >
                 Play Again
               </button>
               <button
                 onClick={onBack}
-                className="w-full bg-surface text-foreground py-3 rounded-lg font-bold border border-border hover:opacity-70 transition"
+                className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition"
               >
                 Back to Home
               </button>

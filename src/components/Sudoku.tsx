@@ -7,13 +7,14 @@ import {
   isComplete,
   getRelatedCells,
 } from '@/lib/sudoku-logic';
-import { updateGameStats } from '@/lib/storage';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface SudokuProps {
   onBack: () => void;
 }
 
 export default function Sudoku({ onBack }: SudokuProps) {
+  const { updateStats } = useProfile();
   const [difficulty, setDifficulty] = useState<SudokuDifficulty | null>(null);
   const [gameState, setGameState] = useState<SudokuGameState | null>(null);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
@@ -26,7 +27,6 @@ export default function Sudoku({ onBack }: SudokuProps) {
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
       setElapsedTime(elapsed);
-      setGameState(prev => prev ? { ...prev, elapsedTime: elapsed } : null);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -68,7 +68,7 @@ export default function Sudoku({ onBack }: SudokuProps) {
   };
 
   const handleGameComplete = async () => {
-    updateGameStats('sudoku', 'win');
+    updateStats('sudoku', 'win', elapsedTime);
     setShowResult(true);
   };
 
@@ -90,35 +90,36 @@ export default function Sudoku({ onBack }: SudokuProps) {
 
   if (!gameState) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <div className="w-full max-w-md">
-          <div className="flex justify-between items-start mb-8">
-            <h1 className="text-4xl font-bold text-foreground">Sudoku</h1>
+      <div className="min-h-screen bg-gradient-to-br from-green-600 via-cyan-600 to-blue-600 p-4">
+        <div className="w-full max-w-md mx-auto">
+          <div className="flex justify-between items-start mb-8 pt-8">
+            <div>
+              <h1 className="text-4xl font-bold text-white">Sudoku</h1>
+              <p className="text-white text-opacity-80 mt-1">Select Difficulty</p>
+            </div>
             <button
               onClick={onBack}
-              className="text-2xl hover:opacity-70 transition"
+              className="text-2xl text-white hover:opacity-70 transition"
             >
               ✕
             </button>
           </div>
-
-          <p className="text-lg text-foreground font-bold mb-4">Select Difficulty</p>
 
           <div className="space-y-3">
             {(['easy', 'medium', 'hard'] as SudokuDifficulty[]).map(diff => (
               <button
                 key={diff}
                 onClick={() => handleSelectDifficulty(diff)}
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:opacity-90 transition capitalize"
+                className="w-full bg-white text-gray-800 py-4 rounded-xl font-bold hover:shadow-lg transition capitalize text-lg"
               >
-                {diff}
+                {diff === 'easy' ? '😊 Easy' : diff === 'medium' ? '🤔 Medium' : '🧠 Hard'}
               </button>
             ))}
           </div>
 
           <button
             onClick={onBack}
-            className="w-full bg-surface text-foreground py-4 rounded-xl font-bold border border-border hover:opacity-70 transition mt-4"
+            className="w-full bg-white bg-opacity-20 text-white py-4 rounded-xl font-bold border-2 border-white hover:bg-opacity-30 transition mt-4"
           >
             Back to Home
           </button>
@@ -130,28 +131,28 @@ export default function Sudoku({ onBack }: SudokuProps) {
   const relatedCells = selectedCell ? getRelatedCells(selectedCell[0], selectedCell[1]) : [];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-between items-start mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-600 via-cyan-600 to-blue-600 p-4">
+      <div className="w-full max-w-md mx-auto">
+        <div className="flex justify-between items-start mb-4 pt-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground">Sudoku</h1>
-            <p className="text-muted mt-1 capitalize">{difficulty}</p>
+            <h1 className="text-4xl font-bold text-white">Sudoku</h1>
+            <p className="text-white text-opacity-80 mt-1 capitalize">{difficulty}</p>
           </div>
           <button
             onClick={onBack}
-            className="text-2xl hover:opacity-70 transition"
+            className="text-2xl text-white hover:opacity-70 transition"
           >
             ✕
           </button>
         </div>
 
-        <div className="bg-surface rounded-lg p-3 mb-6 border border-border">
-          <p className="text-center text-foreground font-bold">
-            Time: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
+        <div className="bg-white bg-opacity-10 backdrop-blur rounded-lg p-3 mb-6 border border-white border-opacity-20">
+          <p className="text-center text-white font-bold">
+            ⏱️ {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
           </p>
         </div>
 
-        <div className="bg-surface rounded-2xl p-2 mb-6 border border-border">
+        <div className="bg-white rounded-2xl p-2 mb-6 shadow-2xl">
           {gameState.board.map((row, rowIndex) => (
             <div key={rowIndex} className="flex">
               {row.map((cell, colIndex) => {
@@ -170,12 +171,10 @@ export default function Sudoku({ onBack }: SudokuProps) {
                     } ${isColStart ? 'border-t-2' : 'border-t'} ${
                       colIndex === 8 ? 'border-r-2' : ''
                     } ${rowIndex === 8 ? 'border-b-2' : ''} ${
-                      isSelected ? 'bg-primary bg-opacity-20' : isRelated ? 'bg-primary bg-opacity-10' : ''
-                    } ${cell.isFixed ? 'bg-muted bg-opacity-10' : ''} ${
-                      cell.isError ? 'bg-error bg-opacity-20' : ''
-                    } ${!cell.isFixed ? 'text-primary' : 'text-foreground'} ${
-                      cell.isError ? 'text-error' : ''
-                    } hover:opacity-70 transition disabled:opacity-100`}
+                      isSelected ? 'bg-cyan-300' : isRelated ? 'bg-cyan-100' : ''
+                    } ${cell.isFixed ? 'bg-gray-100' : 'bg-white'} ${
+                      !cell.isFixed ? 'text-cyan-600' : 'text-gray-800'
+                    } ${cell.isError ? 'bg-red-200 text-red-600' : ''} hover:opacity-70 transition disabled:opacity-100`}
                   >
                     {cell.value || ''}
                   </button>
@@ -185,14 +184,14 @@ export default function Sudoku({ onBack }: SudokuProps) {
           ))}
         </div>
 
-        <div className="bg-surface rounded-2xl p-4 mb-6 border border-border">
+        <div className="bg-white rounded-2xl p-4 mb-6 shadow-2xl">
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
               <button
                 key={num}
                 onClick={() => handleNumberPress(num)}
                 disabled={!selectedCell}
-                className="aspect-square bg-primary text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition"
+                className="aspect-square bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold rounded-lg hover:shadow-lg disabled:opacity-50 transition text-lg"
               >
                 {num}
               </button>
@@ -204,21 +203,21 @@ export default function Sudoku({ onBack }: SudokuProps) {
           <button
             onClick={handleClear}
             disabled={!selectedCell}
-            className="w-full bg-error text-white py-3 rounded-lg font-bold hover:opacity-90 disabled:opacity-50 transition"
+            className="w-full bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 disabled:opacity-50 transition"
           >
             Clear Cell
           </button>
 
           <button
             onClick={handleNewGame}
-            className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
+            className="w-full bg-white text-cyan-600 py-3 rounded-xl font-bold hover:shadow-lg transition"
           >
             New Game
           </button>
 
           <button
             onClick={onBack}
-            className="w-full bg-surface text-foreground py-3 rounded-lg font-bold border border-border hover:opacity-70 transition"
+            className="w-full bg-white bg-opacity-20 text-white py-3 rounded-xl font-bold border-2 border-white hover:bg-opacity-30 transition"
           >
             Back to Home
           </button>
@@ -227,22 +226,22 @@ export default function Sudoku({ onBack }: SudokuProps) {
 
       {showResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl p-8 w-full max-w-sm border border-border">
-            <p className="text-4xl text-center mb-4">🎉</p>
-            <h2 className="text-2xl font-bold text-foreground text-center mb-2">Puzzle Complete!</h2>
-            <p className="text-lg text-muted text-center mb-8">
-              Time: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <p className="text-5xl text-center mb-4">🎉</p>
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">Puzzle Complete!</h2>
+            <p className="text-lg text-gray-600 text-center mb-8">
+              ⏱️ {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
             </p>
             <div className="space-y-3">
               <button
                 onClick={handleNewGame}
-                className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
+                className="w-full bg-gradient-to-r from-green-500 to-cyan-500 text-white py-3 rounded-lg font-bold hover:opacity-90 transition"
               >
                 Play Again
               </button>
               <button
                 onClick={onBack}
-                className="w-full bg-surface text-foreground py-3 rounded-lg font-bold border border-border hover:opacity-70 transition"
+                className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition"
               >
                 Back to Home
               </button>
